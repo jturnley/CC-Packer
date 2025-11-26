@@ -99,11 +99,7 @@ class CCMerger:
             if f.is_file():
                 texture_files.append((f, f.stat().st_size))
         
-        # 3GB Limit (approx 3.2GB uncompressed usually fits safely in 2GB compressed limit, but let's use the 3GB logic from main)
-        # Main code used 7GB uncompressed limit for ~3.5GB compressed.
-        # Let's be safe and use 3GB uncompressed -> ~1.5GB compressed to be super safe, or stick to the main code's logic.
-        # The main code used: MAX_UNCOMPRESSED_SIZE = int(7.0 * 1024 * 1024 * 1024)
-        # I will use that.
+        # Split textures by 7GB uncompressed (typically compresses to ~3.5GB)
         MAX_SIZE = int(7.0 * 1024 * 1024 * 1024) 
         
         groups = []
@@ -315,12 +311,6 @@ class CCMerger:
         # Update record size (total size - record header size (20 bytes))
         record_size = len(data) - 16
         data[size_placeholder:size_placeholder+4] = record_size.to_bytes(4, 'little')
-        
-        # Add language support for localization
-        # These are required for proper FO4 localization
-        localization_languages = [
-            b'en',  # English
-        ]
         
         with open(path, 'wb') as f:
             f.write(data)

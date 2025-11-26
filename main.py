@@ -4,7 +4,7 @@ import logging
 import webbrowser
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QLabel, QLineEdit, QPushButton, 
-                            QTextEdit, QFileDialog, QMessageBox, QProgressBar)
+                            QTextEdit, QFileDialog, QMessageBox)
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from merger import CCMerger
 
@@ -110,6 +110,11 @@ class MainWindow(QMainWindow):
     def log(self, message):
         self.log_output.append(message)
 
+    def _disable_buttons(self):
+        """Disable merge and restore buttons during operation."""
+        self.merge_btn.setEnabled(False)
+        self.restore_btn.setEnabled(False)
+
     def detect_paths(self):
         # Try to detect FO4
         # Common paths
@@ -163,8 +168,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Error", "Invalid Archive2 path.")
             return
 
-        self.merge_btn.setEnabled(False)
-        self.restore_btn.setEnabled(False)
+        self._disable_buttons()
         self.log("Starting merge process...")
         
         self.worker = MergeWorker(self.merger, fo4, a2)
@@ -178,8 +182,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Error", "Invalid Fallout 4 path.")
             return
 
-        self.merge_btn.setEnabled(False)
-        self.restore_btn.setEnabled(False)
+        self._disable_buttons()
         self.log("Starting restore process...")
 
         self.worker = RestoreWorker(self.merger, fo4)
