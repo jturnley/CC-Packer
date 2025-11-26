@@ -87,11 +87,15 @@ self.setWindowTitle("CC Packer v1.0.2")
 - Fix 2
 
 ## Changelog Summary
+
 ### v1.0.2 (Date)
-- Changes
+- Full FO4 localization support in ESL files
+- Enhanced plugin metadata structure
+- Improved plugin manager compatibility
 
 ### v1.0.1 (Date)
-- Changes
+- Fixed sound playback issues
+- Updated Archive2 arguments
 ```
 
 ---
@@ -112,6 +116,61 @@ self.setWindowTitle("CC Packer v1.0.2")
 - "What's New" section (if applicable)
 - Version history timeline
 - Changelog
+
+### Step 1.5: Update CHANGELOG.md
+**What:** Add release notes to the main CHANGELOG.md file  
+**How:**
+1. Open `CHANGELOG.md` in project root
+2. Add new version section at the top under the header:
+   ```markdown
+   ## [1.0.2] - 2025-11-26
+   
+   ### Added
+   
+   - List of new features
+   - Describe what was added
+   
+   ### Improved
+   
+   - List of improvements
+   - Better performance, features, etc.
+   
+   ### Fixed
+   
+   - List of bugs fixed
+   - Issues resolved
+   ```
+3. Move previous version down (1.0.1, 1.0.0, etc. stay below)
+4. Use today's date in format YYYY-MM-DD
+5. Ensure blank lines around headings and lists (Keep a Changelog format)
+6. Save file
+
+**Example Format:**
+```markdown
+## [1.0.2] - 2025-11-26
+
+### Added
+
+- Full FO4 localization support in generated ESL files
+- Proper ESL metadata with subrecords
+- Enhanced plugin compatibility
+
+### Improved
+
+- ESL file generation includes complete metadata
+```
+
+**Verification:**
+- [ ] Version number matches main.py and version updates
+- [ ] Date matches current date (YYYY-MM-DD format)
+- [ ] All added features are listed
+- [ ] All improvements are documented
+- [ ] All bug fixes are documented
+- [ ] Blank lines present around headings
+- [ ] Blank lines present around lists
+- [ ] Previous versions remain intact below
+- [ ] File is saved successfully
+- [ ] Matches Keep a Changelog format
 
 ---
 

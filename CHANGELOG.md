@@ -5,6 +5,21 @@ All notable changes to CC-Packer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-11-26
+
+### Added
+
+- Full FO4 localization support in generated ESL files
+- Proper ESL metadata with HEDR, CNAM, SNAM, ONAM, INTV, and INCC subrecords
+- Enhanced plugin compatibility with Vortex and MO2 plugin managers
+- Comprehensive release process documentation for future releases
+
+### Improved
+
+- ESL file generation now includes complete metadata structure
+- Better plugin recognition in Fallout 4
+- Improved release workflow with documented procedures
+
 ## [1.0.1] - 2025-11-26
 
 ### Fixed
@@ -15,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-11-25
 
 ### Added
+
 - Initial release of CC-Packer
 - Automatic Fallout 4 installation detection
 - Automatic Archive2.exe detection
@@ -28,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Build scripts for creating standalone executables
 
 ### Features
+
 - Merges cc*-Main.ba2 → CCMerged-Main.ba2
 - Merges cc*-Textures.ba2 → CCMerged-Textures.ba2 (auto-split if >3GB)
 - Merges cc*-Geometry.ba2 → CCMerged-Geometry.ba2
