@@ -57,6 +57,22 @@ class CCMerger:
             progress_callback(f"Extracting Textures [{i+1}/{len(texture_ba2s)}]: {f.name}")
             subprocess.run([archive2_path, str(f), f"-e={textures_dir}"], check=True, capture_output=True)
 
+        created_esls = []
+
+        # Separate Sounds
+        sounds_dir = temp_dir / "Sounds"
+        sounds_dir.mkdir()
+        sound_extensions = {".xwm", ".wav", ".fuz"}
+        has_sounds = False
+        
+        for f in general_dir.rglob("*"):
+            if f.is_file() and f.suffix.lower() in sound_extensions:
+                rel = f.relative_to(general_dir)
+                dest = sounds_dir / rel
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(f), str(dest))
+                has_sounds = True
+
         # 4. Repack Main
         output_name = "CCMerged"
         merged_main = data_path / f"{output_name} - Main.ba2"
@@ -64,6 +80,18 @@ class CCMerger:
         if list(general_dir.rglob("*")):
             progress_callback("Repacking Main Archive...")
             subprocess.run([archive2_path, str(general_dir), f"-c={merged_main}", "-f=General", f"-r={general_dir}"], check=True, capture_output=True)
+
+        # 4b. Repack Sounds
+        if has_sounds:
+            progress_callback("Repacking Sounds (Uncompressed)...")
+            sound_output_name = "CCMerged_Sounds"
+            merged_sounds = data_path / f"{sound_output_name} - Main.ba2"
+            # Use General format but specify None for compression
+            subprocess.run([archive2_path, str(sounds_dir), f"-c={merged_sounds}", "-f=General", "-compression=None", f"-r={sounds_dir}"], check=True, capture_output=True)
+            
+            sound_esl = f"{sound_output_name}.esl"
+            self._create_dummy_esl(data_path / sound_esl)
+            created_esls.append(sound_esl)
 
         # 5. Repack Textures (Smart Splitting)
         texture_files = []
@@ -91,8 +119,6 @@ class CCMerger:
             current_size += f_size
         if current_group:
             groups.append(current_group)
-
-        created_esls = []
 
         for idx, group in enumerate(groups):
             suffix = "" if idx == 0 else f"_Part{idx+1}"

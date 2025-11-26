@@ -1,12 +1,12 @@
 @echo off
-REM CC-Packer v1.0 Release Build Script
+REM CC-Packer v1.0.1 Release Build Script
 echo ========================================
-echo CC-Packer v1.0 Release Build
+echo CC-Packer v1.0.1 Release Build
 echo ========================================
 echo.
 
 REM Set version
-set VERSION=1.0
+set VERSION=1.0.1
 set RELEASE_DIR=release\v%VERSION%
 
 REM Clean previous builds
@@ -32,7 +32,10 @@ echo [3/5] Creating release package...
 mkdir %RELEASE_DIR%\CC-Packer_v%VERSION%
 copy dist\CCPacker.exe %RELEASE_DIR%\CC-Packer_v%VERSION%\
 copy README.md %RELEASE_DIR%\CC-Packer_v%VERSION%\
-copy ..\LICENSE %RELEASE_DIR%\CC-Packer_v%VERSION%\
+copy LICENSE %RELEASE_DIR%\CC-Packer_v%VERSION%\
+copy RELEASE_NOTES_v1.0.1.md %RELEASE_DIR%\CC-Packer_v%VERSION%\
+copy CHANGELOG.md %RELEASE_DIR%\CC-Packer_v%VERSION%\
+copy ARCHIVE2_README.md %RELEASE_DIR%\CC-Packer_v%VERSION%\
 
 REM Create source package
 echo.
@@ -44,7 +47,10 @@ copy requirements.txt %RELEASE_DIR%\CC-Packer_v%VERSION%_Source\
 copy CCPacker.spec %RELEASE_DIR%\CC-Packer_v%VERSION%_Source\
 copy build_exe.bat %RELEASE_DIR%\CC-Packer_v%VERSION%_Source\
 copy README.md %RELEASE_DIR%\CC-Packer_v%VERSION%_Source\
-copy ..\LICENSE %RELEASE_DIR%\CC-Packer_v%VERSION%_Source\
+copy LICENSE %RELEASE_DIR%\CC-Packer_v%VERSION%_Source\
+copy RELEASE_NOTES_v1.0.1.md %RELEASE_DIR%\CC-Packer_v%VERSION%_Source\
+copy CHANGELOG.md %RELEASE_DIR%\CC-Packer_v%VERSION%_Source\
+copy ARCHIVE2_README.md %RELEASE_DIR%\CC-Packer_v%VERSION%_Source\
 
 REM Create zip archives
 echo.
