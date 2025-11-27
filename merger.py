@@ -18,14 +18,33 @@ class CCMerger:
         if not data_path.exists():
             return {"success": False, "error": "Data folder not found."}
 
-        # 1. Identify CC Files
-        cc_files = list(data_path.glob("cc*.ba2"))
+        # 1. Identify CC Files (exclude CCMerged files created by this tool)
+        all_cc_files = list(data_path.glob("cc*.ba2"))
+        # Filter out any CCMerged archives to prevent re-packing previously merged content
+        cc_files = [f for f in all_cc_files if not f.name.lower().startswith("ccmerged")]
+        
         if not cc_files:
-            return {"success": False, "error": "No Creation Club (cc*.ba2) files found."}
+            if all_cc_files:
+                return {"success": False, "error": "Only previously merged (CCMerged) archives found. No new CC files to merge."}
+            else:
+                return {"success": False, "error": "No Creation Club (cc*.ba2) files found."}
 
         progress_callback(f"Found {len(cc_files)} CC archives.")
 
-        # 2. Backup
+        # Check if merged files already exist (optional cleanup warning)
+        existing_merged = list(data_path.glob("CCMerged*.ba2"))
+        if existing_merged:
+            progress_callback(f"Warning: Found {len(existing_merged)} previously merged archive(s). These will be replaced.")
+
+        # 2. Clean up old merged files and their ESLs
+        progress_callback("Cleaning up old merged files...")
+        for f in data_path.glob("CCMerged*.*"):
+            try:
+                f.unlink()
+            except Exception as e:
+                progress_callback(f"Warning: Could not delete {f.name}: {e}")
+
+        # 3. Backup
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         current_backup = backup_dir / timestamp
         current_backup.mkdir(parents=True, exist_ok=True)
@@ -34,7 +53,7 @@ class CCMerger:
         for f in cc_files:
             shutil.copy2(f, current_backup / f.name)
 
-        # 3. Extract
+        # 4. Extract
         if temp_dir.exists():
             shutil.rmtree(temp_dir)
         temp_dir.mkdir()
@@ -73,7 +92,7 @@ class CCMerger:
                 shutil.move(str(f), str(dest))
                 has_sounds = True
 
-        # 4. Repack Main
+        # 5. Repack Main
         output_name = "CCMerged"
         merged_main = data_path / f"{output_name} - Main.ba2"
         
@@ -81,7 +100,7 @@ class CCMerger:
             progress_callback("Repacking Main Archive...")
             subprocess.run([archive2_path, str(general_dir), f"-c={merged_main}", "-f=General", f"-r={general_dir}"], check=True, capture_output=True)
 
-        # 4b. Repack Sounds
+        # 5b. Repack Sounds
         if has_sounds:
             progress_callback("Repacking Sounds (Uncompressed)...")
             sound_output_name = "CCMerged_Sounds"
@@ -93,7 +112,7 @@ class CCMerger:
             self._create_dummy_esl(data_path / sound_esl)
             created_esls.append(sound_esl)
 
-        # 5. Repack Textures (Smart Splitting)
+        # 6. Repack Textures (Smart Splitting)
         texture_files = []
         for f in textures_dir.rglob("*"):
             if f.is_file():
@@ -140,11 +159,11 @@ class CCMerger:
             self._create_dummy_esl(data_path / esl_name)
             created_esls.append(esl_name)
 
-        # 6. Add to plugins.txt
+        # 7. Add to plugins.txt
         progress_callback("Enabling plugins...")
         self._add_to_plugins_txt(created_esls)
 
-        # 7. Cleanup
+        # 8. Cleanup
         progress_callback("Cleaning up...")
         for f in cc_files:
             f.unlink()
