@@ -115,6 +115,34 @@ class MainWindow(QMainWindow):
         self.merge_btn.setEnabled(False)
         self.restore_btn.setEnabled(False)
 
+    def _check_existing_backup(self, fo4_path):
+        """Check if a backup already exists and prompt user for confirmation.
+        
+        Returns:
+            True if user wants to continue with merge
+            False if user cancels
+        """
+        from pathlib import Path
+        data_path = Path(fo4_path) / "Data"
+        backup_dir = data_path / "CC_Backup"
+        
+        if backup_dir.exists():
+            backup_count = len([d for d in backup_dir.iterdir() if d.is_dir()])
+            if backup_count > 0:
+                reply = QMessageBox.question(
+                    self, 
+                    "Backup Already Exists",
+                    f"Found {backup_count} existing backup(s) in:\n{backup_dir}\n\n"
+                    "A new backup will be created for this merge.\n"
+                    "Your original CC files are still protected.\n\n"
+                    "Continue with merge?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.Yes
+                )
+                return reply == QMessageBox.StandardButton.Yes
+        
+        return True
+
     def detect_paths(self):
         # Try to detect FO4
         # Common paths
@@ -166,6 +194,11 @@ class MainWindow(QMainWindow):
             return
         if not a2 or not os.path.exists(a2):
             QMessageBox.warning(self, "Error", "Invalid Archive2 path.")
+            return
+
+        # Check if backup already exists and confirm with user
+        if not self._check_existing_backup(fo4):
+            self.log("Merge cancelled by user.")
             return
 
         self._disable_buttons()
