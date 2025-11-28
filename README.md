@@ -3,7 +3,7 @@
 A simple, standalone tool to merge Fallout 4 Creation Club content into unified archives, reducing plugin count and improving load times.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/jturnley/CC-Packer/releases/tag/v1.0.2)
+[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/jturnley/CC-Packer/releases/tag/v1.0.3)
 
 ## ✨ Features
 
@@ -33,25 +33,20 @@ A simple, standalone tool to merge Fallout 4 Creation Club content into unified 
 - Frees up plugin slots for your favorite mods
 - Prevents "Brown Face" bug through automatic texture splitting
 - **NEW**: Full localization support for enhanced compatibility
+- **STRINGS Generation**: Automatic extraction and merging of localized text
 
-## 🆕 What's New in v1.0.2?
+## 🆕 What's New in v1.0.3?
 
-### FO4 Localization Support
+### STRINGS File Preservation
 
-The v1.0.2 update adds comprehensive Fallout 4 localization support to generated ESL files:
+The v1.0.3+ update properly handles STRINGS files for localization:
 
-- **Complete ESL Headers**: Includes all required subrecords (HEDR, CNAM, SNAM, ONAM, INTV, INCC)
-- **Proper Light Master Flag**: ESL files now correctly use the light master flag (0xFE)
-- **Metadata Tracking**: Creator, summary, and version information embedded in each ESL
-- **Format Compliance**: Improved record size calculations for 100% valid ESL format
-- **Future-Ready**: Framework in place for multi-language content support
+- **Original STRINGS Preserved**: All original CC STRINGS files (e.g., `ccSWKFO4001-AstronautPowerArmor_en.STRINGS`) are preserved inside the merged BA2 archives
+- **Plugin Localization Works**: The original CC plugins (cc*.esl) continue to handle their own localization
+- **No Additional Files Needed**: The game automatically finds STRINGS files inside BA2 archives
+- **All Languages Supported**: STRINGS files for all languages (en, de, es, fr, it, ja, pl, pt, ru, zh) are preserved
 
-### Benefits
-
-- Better compatibility with FO4's plugin system
-- Enhanced recognition by plugin managers (Vortex, Mod Organizer 2)
-- Proper localization metadata for potential language support
-- More reliable plugin loading and initialization
+This approach ensures compatibility with all language settings and prevents "LOOKUP FAILED!" errors.
 
 ## 📋 Requirements
 
@@ -63,7 +58,7 @@ The v1.0.2 update adds comprehensive Fallout 4 localization support to generated
 
 ### Option 1: Download Binary (Recommended)
 
-1. Download `CC-Packer_v1.0.2_Windows.zip` from [Releases](https://github.com/jturnley/CC-Packer/releases)
+1. Download `CC-Packer_v1.0.3_Windows.zip` from [Releases](https://github.com/jturnley/CC-Packer/releases)
 2. Extract anywhere on your PC
 3. Run `CCPacker.exe` - no installation needed!
 
@@ -132,6 +127,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Bethesda for Fallout 4 and the Creation Kit
 - The Fallout 4 modding community for testing and feedback
+- **[MGuffin](https://github.com/MGuffin)** - Author of [xTranslator](https://github.com/MGuffin/xTranslator), whose open-source work on Bethesda plugin translation tools helped us understand the STRINGS file format specification used for localization support in CC-Packer (v1.0.3+). xTranslator is an invaluable tool for the modding community.
 
 ## 📞 Support
 

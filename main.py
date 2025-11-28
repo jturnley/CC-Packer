@@ -2,6 +2,7 @@ import sys
 import os
 import logging
 import webbrowser
+import ctypes
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QLabel, QLineEdit, QPushButton, 
                             QTextEdit, QFileDialog, QMessageBox)
@@ -55,7 +56,7 @@ class MainWindow(QMainWindow):
         self.detect_paths()
 
     def init_ui(self):
-        self.setWindowTitle("CC Packer v1.0.2")
+        self.setWindowTitle("CC Packer v1.0.3")
         self.setMinimumSize(600, 500)
 
         central_widget = QWidget()
@@ -217,6 +218,38 @@ class MainWindow(QMainWindow):
         
         return True
 
+    def _is_admin(self):
+        """Check if the application is running with administrator privileges."""
+        try:
+            return ctypes.windll.shell32.IsUserAnAdmin() != 0
+        except:
+            return False
+
+    def _is_protected_path(self, path):
+        """Check if a path is in a Windows-protected location."""
+        protected_prefixes = [
+            os.environ.get('ProgramFiles', r'C:\Program Files'),
+            os.environ.get('ProgramFiles(x86)', r'C:\Program Files (x86)'),
+            os.environ.get('SystemRoot', r'C:\Windows'),
+        ]
+        path_lower = path.lower()
+        return any(path_lower.startswith(p.lower()) for p in protected_prefixes if p)
+
+    def _check_elevation_needed(self, path):
+        """Warn user if elevation may be required for the given path."""
+        if self._is_protected_path(path) and not self._is_admin():
+            QMessageBox.warning(
+                self,
+                "Administrator Rights May Be Required",
+                f"Fallout 4 is installed in a protected location:\n\n"
+                f"{path}\n\n"
+                "You may need to run CC-Packer as Administrator to modify files.\n\n"
+                "Right-click CCPacker.exe and select 'Run as administrator'."
+            )
+            self.log("⚠ Warning: FO4 is in a protected location. Run as Administrator if you encounter errors.")
+            return True
+        return False
+
     def detect_paths(self):
         # Try to detect FO4
         # Common paths
@@ -231,6 +264,7 @@ class MainWindow(QMainWindow):
                 self.fo4_input.setText(path)
                 self.check_archive2(path)
                 self._show_merge_status(path)
+                self._check_elevation_needed(path)
                 break
 
     def check_archive2(self, fo4_path):
@@ -255,6 +289,7 @@ class MainWindow(QMainWindow):
             self.fo4_input.setText(path)
             self.check_archive2(path)
             self._show_merge_status(path)
+            self._check_elevation_needed(path)
 
     def browse_archive2(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select Archive2.exe", filter="Executables (*.exe)")
