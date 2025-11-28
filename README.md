@@ -21,15 +21,15 @@ A simple, standalone tool to merge Fallout 4 Creation Club content into unified 
 ### The Problem
 
 - Fallout 4 has a 255 plugin limit (ESM/ESP files)
-- Each Creation Club item = 1 plugin
-- With 70+ CC items, you're left with only ~180 slots for mods
-- Game performance degrades with many small BA2 archives
+- Each Creation Club item = 1 plugin slot
+- With 170+ CC items now available, you could lose over half your plugin slots!
+- Game performance degrades with hundreds of small BA2 archives (346+ files)
 
 ### The Solution
 
-- Merges all CC archives into 4-6 unified files
-- Reduces plugin count from 70+ to just 1 master plugin
-- Improves game loading times by 10-30%
+- Merges all CC archives into just 3-4 unified files
+- Reduces plugin count from 170+ to just 2-3 light master plugins
+- Improves game loading times significantly
 - Frees up plugin slots for your favorite mods
 - Prevents "Brown Face" bug through automatic texture splitting
 - **NEW**: Full localization support for enhanced compatibility
@@ -37,22 +37,28 @@ A simple, standalone tool to merge Fallout 4 Creation Club content into unified 
 
 ## 🆕 What's New in v1.0.3?
 
-### STRINGS File Preservation
+### Major Improvements
 
-The v1.0.3+ update properly handles STRINGS files for localization:
+- **Loose STRINGS Extraction**: STRINGS files are now extracted to `Data/Strings` as loose files for reliable localization lookup
+- **Separate Audio Archive**: Sound files (.xwm, .wav, .fuz, .lip) are packed uncompressed in a dedicated archive to prevent audio corruption
+- **BA2 Integrity Verification**: All created archives are verified after packing to detect corruption
+- **Vanilla-Style Naming**: Texture archives now use numbered naming like vanilla (`CCMerged - Textures1.ba2`, `CCMerged - Textures2.ba2`)
+- **Merged File Detection**: Automatically detects previously merged files and prevents accidental re-merging
+- **Comprehensive Error Handling**: Detailed error messages instead of generic "error code 1" failures
+- **Administrator Detection**: Warns if running in a protected location without admin rights
 
-- **Original STRINGS Preserved**: All original CC STRINGS files (e.g., `ccSWKFO4001-AstronautPowerArmor_en.STRINGS`) are preserved inside the merged BA2 archives
-- **Plugin Localization Works**: The original CC plugins (cc*.esl) continue to handle their own localization
-- **No Additional Files Needed**: The game automatically finds STRINGS files inside BA2 archives
-- **All Languages Supported**: STRINGS files for all languages (en, de, es, fr, it, ja, pl, pt, ru, zh) are preserved
+### Localization Support
 
-This approach ensures compatibility with all language settings and prevents "LOOKUP FAILED!" errors.
+- All original CC STRINGS files are extracted to `Data/Strings` folder
+- Original CC plugins (cc*.esl) continue to handle their own localization
+- All languages supported (en, de, es, fr, it, ja, pl, pt, ru, zh)
+- Prevents "LOOKUP FAILED!" errors
 
 ## 📋 Requirements
 
 - Windows 10/11 (64-bit)
 - Fallout 4 with Creation Club content
-- Creation Kit (for `Archive2.exe`) - [Free download from Bethesda.net](https://bethesda.net/en/game/bethesda-launcher)
+- Creation Kit (for `Archive2.exe`) - [Steam](steam://install/1946160) | [Bethesda.net](https://bethesda.net/en/game/bethesda-launcher)
 
 ## 📥 Installation
 
@@ -94,13 +100,16 @@ If auto-detection fails:
 
 ## 📊 What Gets Merged
 
-- `cc*-Main.ba2` → `CCMerged-Main.ba2`
-- `cc*-Textures.ba2` → `CCMerged-Textures.ba2` (auto-split if >3GB)
-- `cc*-Sounds.ba2` → `CCMerged-Sounds.ba2` (uncompressed, v1.0.2+)
-- `cc*-Geometry.ba2` → `CCMerged-Geometry.ba2`
-- `cc*-Voices_en.ba2` → `CCMerged-Voices_en.ba2`
-- All other archive types merged appropriately
-- Each merged archive gets an ESL plugin with proper localization metadata
+| Source Files | Output Archive | Notes |
+|-------------|----------------|-------|
+| `cc* - Main.ba2` | `CCMerged - Main.ba2` | Compressed, meshes/scripts/etc |
+| `cc* - Textures.ba2` | `CCMerged - Textures1.ba2`, `Textures2.ba2`, etc. | Auto-split at 7GB, vanilla naming |
+| Sound files (.xwm, .wav, .fuz, .lip) | `CCMerged_Sounds - Main.ba2` | Uncompressed to prevent audio issues |
+| STRINGS files | `Data/Strings/*.STRINGS` | Extracted as loose files |
+
+**Output ESL Plugins:**
+- `CCMerged.esl` - Light master for main + texture archives
+- `CCMerged_Sounds.esl` - Light master for audio archive
 
 ## 🔨 Building from Source
 
@@ -137,9 +146,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📋 Version History
 
+- **v1.0.3** (November 28, 2025) - Loose STRINGS extraction, separate audio archive, BA2 verification, vanilla naming, comprehensive error handling
 - **v1.0.2** (November 26, 2025) - FO4 localization support, enhanced ESL headers
-- **v1.0.1** - Smart texture archive splitting, enhanced backup system
-- **v1.0.0** - Initial release, basic CC content merging
+- **v1.0.1** (November 26, 2025) - Smart texture archive splitting, enhanced backup system
+- **v1.0.0** (November 26, 2025) - Initial release, basic CC content merging
 
 ## 🔗 Related Projects
 

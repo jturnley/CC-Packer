@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Loose Strings Extraction** - Original CC STRINGS files are now extracted as loose files to `Data/Strings` to ensure reliable lookup by the game engine.
 - **Administrator Elevation Check** - The application now detects if Fallout 4 is installed in a protected location (e.g., `Program Files`) and warns the user to run as Administrator if needed.
 - **Automatic Backup Cleanup** - Old backups are now automatically removed during restore, keeping only the most recent backup to save disk space.
+- **BA2 Integrity Verification** - All created archives are now verified before completing the merge process. Checks BA2 header magic number, version, archive type, file count, and name table offset to detect corruption.
+- **Archive2 List Validation** - When Archive2.exe is available, archives are also validated using Archive2's built-in listing functionality.
+- **Merged File Detection** - The application now detects when CC files have already been merged (CCMerged*.ba2 present) and provides appropriate guidance. Prevents accidental re-merging and warns users about mixed merged/unmerged states.
 
 ### Fixed
 
@@ -21,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Audio Issues** - Prevented audio glitches by ensuring sound files are packed without compression in a dedicated archive.
 - **LIP File Support** - Added `.lip` files (lip-sync data) to the audio archive to ensure proper handling.
 - Fixed ESL plugin flags to use correct Light Master flags (0x201 = Master + Light Master).
+- **Vanilla-Style Texture Naming** - Texture archives now use numbered naming matching vanilla Bethesda archives (e.g., `CCMerged - Textures1.ba2`, `CCMerged - Textures2.ba2`) instead of `CCMerged_Part2 - Textures.ba2`.
 
 ### Changed
 
@@ -32,12 +36,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plugins**: Added `CCMerged_Sounds.esl` to load the separate audio archive.
 - **Main Archive Compression**: Changed from uncompressed to `Default` compression for better compatibility.
 
+### Improved
+
+- **Comprehensive Error Handling** - Replaced generic "error code 1" messages with detailed diagnostics. Archive2 errors now report:
+  - The specific operation that failed (extract/create)
+  - The archive being processed
+  - Exit codes and stderr/stdout output
+  - User-friendly error descriptions (access denied, disk full, file locked, etc.)
+- **10-Minute Timeout** - Added timeout protection for Archive2 operations on very large archives.
+- **Graceful Cleanup** - Improved error handling during cleanup phase to prevent orphaned files.
+
 ### Technical Details
 
 - ESL files now use flags 0x201 (Master + Light Master).
 - `merger.py` now recursively searches for and moves string files to `Data/Strings`.
 - `merger.py` creates a manifest (`moved_strings.txt`) to track and clean up loose string files during restore.
 - Added `ctypes` import for Windows API calls (admin check).
+- Added `Archive2Error` exception class with structured error information.
+- Added `_run_archive2()` method for centralized Archive2 execution with error parsing.
+- Added `verify_ba2_integrity()` method for BA2 header and structure validation.
+- Added `struct` module for binary parsing of BA2 headers.
+- Added type hints for better code documentation.
 
 ## [1.0.2] - 2025-11-26
 

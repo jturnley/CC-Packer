@@ -1,123 +1,113 @@
-# CC-Packer
+[size=6][b]CC-Packer[/b][/size]
 
 A simple, standalone tool to merge Fallout 4 Creation Club content into unified archives, reducing plugin count and improving load times.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/jturnley/CC-Packer/releases/tag/v1.0.0)
+[size=5][b]✨ Features[/b][/size]
 
-## ✨ Features
+[list]
+[*][b]Automatic Detection[/b]: Finds your Fallout 4 installation and Archive2.exe
+[*][b]Smart Merging[/b]: Merges all cc*.ba2 files in your Data folder
+[*][b]Crash Prevention[/b]: Automatically splits large texture archives to prevent issues
+[*][b]BA2 Integrity Verification[/b]: Validates all created archives to detect corruption
+[*][b]Separate Audio Archive[/b]: Sound files packed uncompressed to prevent audio issues
+[*][b]Loose STRINGS Extraction[/b]: STRINGS files extracted to Data/Strings for reliable localization
+[*][b]Merged File Detection[/b]: Detects previously merged files and prevents re-merging
+[*][b]Comprehensive Error Handling[/b]: Detailed error messages instead of cryptic failures
+[*][b]Administrator Detection[/b]: Warns if running in protected locations without admin rights
+[*][b]Safety First[/b]: Backs up all original files to Data/CC_Backup before making changes
+[*][b]Easy Restore[/b]: One-click restoration to original state
+[*][b]Simple GUI[/b]: Clean, intuitive interface - no configuration needed
+[/list]
 
-- **Automatic Detection**: Finds your Fallout 4 installation and Archive2.exe
-- **Smart Merging**: Merges all `cc*.ba2` files in your Data folder
-- **Crash Prevention**: Automatically splits large texture archives (>3GB) to prevent the "Brown Face" bug
-- **Safety First**: Backs up all original files to `Data/CC_Backup` before making changes
-- **Easy Restore**: One-click restoration to original state
-- **Simple GUI**: Clean, intuitive interface - no configuration needed
+[size=5][b]💡 Why Use CC-Packer?[/b][/size]
 
-## 💡 Why Use CC-Packer?
+[b]The Problem[/b]
+[list]
+[*]Fallout 4 has a 255 plugin limit (ESM/ESP files)
+[*]Each Creation Club item = 1 plugin slot
+[*]With 170+ CC items now available, you could lose over half your plugin slots!
+[*]Game performance degrades with hundreds of small BA2 archives (346+ files)
+[/list]
 
-### The Problem
+[b]The Solution[/b]
+[list]
+[*]Merges all CC archives into just 3-4 unified files
+[*]Reduces plugin count from 170+ to just 2-3 light master plugins
+[*]Improves game loading times significantly
+[*]Frees up plugin slots for your favorite mods
+[*]Prevents texture and audio corruption through smart archive handling
+[/list]
 
-- Fallout 4 has a 255 plugin limit (ESM/ESP files)
-- Each Creation Club item = 1 plugin
-- With 70+ CC items, you''re left with only ~180 slots for mods
-- Game performance degrades with many small BA2 archives
+[size=5][b]📋 Requirements[/b][/size]
 
-### The Solution
+[list]
+[*]Windows 10/11 (64-bit)
+[*]Fallout 4 with Creation Club content
+[*]Creation Kit (for Archive2.exe) - Available on [url=steam://install/1946160]Steam[/url] or [url=https://bethesda.net/en/game/bethesda-launcher]Bethesda.net[/url]
+[/list]
 
-- Merges all CC archives into 4-6 unified files
-- Reduces plugin count from 70+ to just 1 master plugin
-- Improves game loading times by 10-30%
-- Frees up plugin slots for your favorite mods
-- Prevents "Brown Face" bug through automatic texture splitting
+[size=5][b]🚀 Quick Start[/b][/size]
 
-## 📋 Requirements
+[list=1]
+[*][b]Download[/b]: Get the latest release from the Files tab
+[*][b]Extract[/b]: Unzip anywhere on your PC
+[*][b]Launch[/b]: Double-click CCPacker.exe
+[*][b]Auto-Detection[/b]: Tool finds Fallout 4 and Archive2.exe automatically
+[*][b]Merge[/b]: Click "Merge CC Content" button
+[*][b]Wait[/b]: Progress shows status (may take 5-15 minutes)
+[*][b]Done[/b]: Launch Fallout 4 and enjoy!
+[/list]
 
-- Windows 10/11 (64-bit)
-- Fallout 4 with Creation Club content
-- Creation Kit (for `Archive2.exe`) - [Free download from Bethesda.net](https://bethesda.net/en/game/bethesda-launcher)
+[size=5][b]📊 What Gets Merged[/b][/size]
 
-## 📥 Installation
+[code]
+Source Files              → Output Archive
+─────────────────────────────────────────────────────────
+cc* - Main.ba2            → CCMerged - Main.ba2 (compressed)
+cc* - Textures.ba2        → CCMerged - Textures1.ba2, Textures2.ba2, etc.
+Sound files (.xwm, etc.)  → CCMerged_Sounds - Main.ba2 (uncompressed)
+STRINGS files             → Data/Strings/*.STRINGS (loose files)
+[/code]
 
-### Option 1: Download Binary (Recommended)
+[b]Output Plugins:[/b]
+[list]
+[*]CCMerged.esl - Light master for main + texture archives
+[*]CCMerged_Sounds.esl - Light master for audio archive
+[/list]
 
-1. Download `CC-Packer_v1.0.0_Windows.zip` from [Releases](https://github.com/jturnley/CC-Packer/releases)
-2. Extract anywhere on your PC
-3. Run `CCPacker.exe` - no installation needed!
+[size=5][b]🛡️ Safety & Backup[/b][/size]
 
-### Option 2: Run from Source
+[list]
+[*]All original CC files are automatically backed up to Data/CC_Backup/
+[*]Backup is timestamped for easy identification
+[*]Click "Restore Backup" to undo the merge anytime
+[*]Old backups automatically cleaned up to save disk space
+[*]Safe to run multiple times
+[/list]
 
-```bash
-git clone https://github.com/jturnley/CC-Packer.git
-cd CC-Packer
-pip install -r requirements.txt
-python main.py
-```
+[size=5][b]🆕 What's New in v1.0.3[/b][/size]
 
-## 🚀 Quick Start
+[list]
+[*][b]Loose STRINGS Extraction[/b] - STRINGS files extracted to Data/Strings for reliable localization
+[*][b]Separate Audio Archive[/b] - Sound files packed uncompressed to prevent audio corruption
+[*][b]BA2 Integrity Verification[/b] - All archives verified after creation
+[*][b]Vanilla-Style Naming[/b] - Texture archives use numbered naming (Textures1, Textures2, etc.)
+[*][b]Merged File Detection[/b] - Prevents accidental re-merging
+[*][b]Comprehensive Error Handling[/b] - Detailed diagnostics instead of "error code 1"
+[*][b]Administrator Detection[/b] - Warns if admin rights may be needed
+[/list]
 
-1. **Launch**: Double-click `CCPacker.exe` (or run `python main.py`)
-2. **Auto-Detection**: Tool finds Fallout 4 and Archive2.exe automatically
-3. **Merge**: Click "Merge CC Archives" button
-4. **Wait**: Progress bar shows status (may take 5-15 minutes)
-5. **Done**: Launch Fallout 4 and enjoy!
+[size=5][b]📞 Support[/b][/size]
 
-### Manual Path Selection
+[list]
+[*][b]Bugs[/b]: Report issues in the Bugs tab
+[*][b]Source Code[/b]: [url=https://github.com/jturnley/CC-Packer]GitHub[/url]
+[/list]
 
-If auto-detection fails:
-- Click "Browse..." to select your Fallout 4 Data folder
-- Click "Browse..." to select Archive2.exe location
+[size=5][b]🙏 Acknowledgments[/b][/size]
 
-## ��️ Safety & Backup
-
-- All original CC files are automatically backed up to `Data/CC_Backup/`
-- Backup is timestamped for easy identification
-- Click "Restore Original CC Archives" to undo the merge anytime
-- Safe to run multiple times
-
-## 📊 What Gets Merged
-
-- `cc*-Main.ba2` → `CCMerged-Main.ba2`
-- `cc*-Textures.ba2` → `CCMerged-Textures.ba2` (auto-split if >3GB)
-- `cc*-Geometry.ba2` → `CCMerged-Geometry.ba2`
-- `cc*-Voices_en.ba2` → `CCMerged-Voices_en.ba2`
-- All other archive types merged appropriately
-
-## 🔨 Building from Source
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Build executable
-build_exe.bat
-
-# Or build release packages
-build_release.bat
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Bethesda for Fallout 4 and the Creation Kit
-- The Fallout 4 modding community for testing and feedback
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/jturnley/CC-Packer/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/jturnley/CC-Packer/discussions)
-
-## 🔗 Related Projects
-
-**[BA2 Manager](https://github.com/jturnley/BA2Manager)** - Full-featured BA2 archive manager for advanced users and modders:
-- Conflict detection and resolution
-- Batch operations
-- MO2 integration
-- Custom merging rules
+[list]
+[*]Bethesda for Fallout 4 and the Creation Kit
+[*]The Fallout 4 modding community for testing and feedback
+[*][b]MGuffin[/b] - Author of xTranslator, whose work helped understand STRINGS file formats
+[/list]

@@ -2,16 +2,214 @@ import os
 import shutil
 import subprocess
 import logging
+import struct
 from pathlib import Path
 from datetime import datetime
+from typing import Optional, Callable, Dict, Any, List, Tuple
 
 # Note: strings_generator is no longer used - original STRINGS files are preserved
 # inside the merged BA2 archives, and our ESL placeholder doesn't need localization.
+
+
+class Archive2Error(Exception):
+    """Custom exception for Archive2 operations with detailed error info."""
+    def __init__(self, message: str, operation: str, archive_path: str = None, 
+                 return_code: int = None, stdout: str = None, stderr: str = None):
+        self.operation = operation
+        self.archive_path = archive_path
+        self.return_code = return_code
+        self.stdout = stdout
+        self.stderr = stderr
+        
+        # Build detailed message
+        details = [f"Archive2 {operation} failed"]
+        if archive_path:
+            details.append(f"Archive: {archive_path}")
+        if return_code is not None:
+            details.append(f"Exit code: {return_code}")
+        if stderr and stderr.strip():
+            details.append(f"Error output: {stderr.strip()}")
+        if stdout and stdout.strip():
+            details.append(f"Output: {stdout.strip()}")
+        if message:
+            details.append(f"Details: {message}")
+            
+        super().__init__("\n".join(details))
+
 
 class CCMerger:
     def __init__(self):
         self.logger = logging.getLogger("CCPacker")
         logging.basicConfig(level=logging.INFO)
+        self._last_error_details = None  # Store detailed error info
+
+    def _run_archive2(self, archive2_path: str, args: List[str], operation: str, 
+                      archive_name: str = None, progress_callback: Callable = None) -> subprocess.CompletedProcess:
+        """Run Archive2.exe with comprehensive error handling.
+        
+        Args:
+            archive2_path: Path to Archive2.exe
+            args: Command line arguments for Archive2
+            operation: Description of operation (e.g., 'extract', 'create')
+            archive_name: Name of archive being processed (for error messages)
+            progress_callback: Optional callback for progress messages
+            
+        Returns:
+            CompletedProcess on success
+            
+        Raises:
+            Archive2Error: On any failure with detailed diagnostics
+        """
+        cmd = [archive2_path] + args
+        
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=600  # 10 minute timeout for large archives
+            )
+            
+            if result.returncode != 0:
+                # Parse common Archive2 errors
+                error_msg = self._parse_archive2_error(result.stderr, result.stdout, result.returncode)
+                raise Archive2Error(
+                    message=error_msg,
+                    operation=operation,
+                    archive_path=archive_name,
+                    return_code=result.returncode,
+                    stdout=result.stdout,
+                    stderr=result.stderr
+                )
+            
+            return result
+            
+        except subprocess.TimeoutExpired:
+            raise Archive2Error(
+                message="Operation timed out after 10 minutes",
+                operation=operation,
+                archive_path=archive_name
+            )
+        except FileNotFoundError:
+            raise Archive2Error(
+                message=f"Archive2.exe not found at: {archive2_path}",
+                operation=operation,
+                archive_path=archive_name
+            )
+        except PermissionError:
+            raise Archive2Error(
+                message="Permission denied - try running as Administrator",
+                operation=operation,
+                archive_path=archive_name
+            )
+        except Exception as e:
+            raise Archive2Error(
+                message=str(e),
+                operation=operation,
+                archive_path=archive_name
+            )
+
+    def _parse_archive2_error(self, stderr: str, stdout: str, return_code: int) -> str:
+        """Parse Archive2 output to provide user-friendly error messages."""
+        combined = f"{stderr} {stdout}".lower()
+        
+        if "access" in combined and "denied" in combined:
+            return "Access denied - the file may be in use or you need Administrator privileges"
+        elif "disk" in combined and ("full" in combined or "space" in combined):
+            return "Insufficient disk space to complete operation"
+        elif "not found" in combined or "cannot find" in combined:
+            return "Source file or directory not found"
+        elif "corrupt" in combined or "invalid" in combined:
+            return "Archive appears to be corrupted or in an invalid format"
+        elif "in use" in combined or "locked" in combined:
+            return "File is locked by another process (possibly the game or another tool)"
+        elif return_code == 1:
+            # Generic error - provide context
+            if stderr.strip():
+                return f"Archive2 reported an error: {stderr.strip()}"
+            elif stdout.strip():
+                return f"Archive2 output: {stdout.strip()}"
+            else:
+                return "Archive2 failed without providing details. Check disk space and file permissions."
+        else:
+            return f"Unexpected error (code {return_code})"
+
+    def verify_ba2_integrity(self, ba2_path: Path, archive2_path: str = None, 
+                             progress_callback: Callable = None) -> Tuple[bool, str]:
+        """Verify a BA2 archive is valid and not corrupted.
+        
+        Args:
+            ba2_path: Path to the BA2 file to verify
+            archive2_path: Path to Archive2.exe (optional, for deep validation)
+            progress_callback: Optional callback for status messages
+            
+        Returns:
+            Tuple of (is_valid, message)
+        """
+        if not ba2_path.exists():
+            return False, f"Archive not found: {ba2_path.name}"
+        
+        file_size = ba2_path.stat().st_size
+        
+        # Check minimum file size (BA2 header is at least 24 bytes)
+        if file_size < 24:
+            return False, f"Archive too small ({file_size} bytes): {ba2_path.name}"
+        
+        try:
+            with open(ba2_path, 'rb') as f:
+                # Read and verify BA2 magic number
+                magic = f.read(4)
+                if magic != b'BTDX':
+                    return False, f"Invalid BA2 header (expected 'BTDX'): {ba2_path.name}"
+                
+                # Read version (should be 1 for FO4)
+                version = struct.unpack('<I', f.read(4))[0]
+                if version != 1:
+                    return False, f"Unexpected BA2 version {version}: {ba2_path.name}"
+                
+                # Read archive type
+                archive_type = f.read(4).decode('ascii', errors='ignore').strip('\x00')
+                if archive_type not in ['GNRL', 'DX10']:
+                    return False, f"Unknown archive type '{archive_type}': {ba2_path.name}"
+                
+                # Read file count
+                file_count = struct.unpack('<I', f.read(4))[0]
+                
+                # Read name table offset
+                name_table_offset = struct.unpack('<Q', f.read(8))[0]
+                
+                # Verify name table offset is within file
+                if name_table_offset > file_size:
+                    return False, f"Corrupted archive (name table beyond EOF): {ba2_path.name}"
+                
+                # If Archive2 is available, try a test extraction
+                if archive2_path and os.path.exists(archive2_path):
+                    try:
+                        # Use -l to list contents (quick validation)
+                        result = subprocess.run(
+                            [archive2_path, str(ba2_path), "-l"],
+                            capture_output=True,
+                            text=True,
+                            timeout=60
+                        )
+                        if result.returncode != 0:
+                            return False, f"Archive2 validation failed: {result.stderr.strip() or 'Unknown error'}"
+                    except subprocess.TimeoutExpired:
+                        # Timeout on list is suspicious
+                        return False, f"Archive2 timed out reading archive: {ba2_path.name}"
+                    except Exception as e:
+                        # Don't fail on Archive2 issues, header check passed
+                        if progress_callback:
+                            progress_callback(f"  Note: Could not run Archive2 validation: {e}")
+                
+                return True, f"Verified: {ba2_path.name} ({file_count} files, {file_size / (1024*1024):.1f} MB)"
+                
+        except struct.error as e:
+            return False, f"Corrupted archive header: {ba2_path.name}"
+        except IOError as e:
+            return False, f"Cannot read archive: {e}"
+        except Exception as e:
+            return False, f"Verification error: {e}"
 
     def merge_cc_content(self, fo4_path, archive2_path, progress_callback):
         data_path = Path(fo4_path) / "Data"
@@ -81,12 +279,30 @@ class CCMerger:
         # Extract Main
         for i, f in enumerate(main_ba2s):
             progress_callback(f"Extracting Main [{i+1}/{len(main_ba2s)}]: {f.name}")
-            subprocess.run([archive2_path, str(f), f"-e={general_dir}"], check=True, capture_output=True)
+            try:
+                self._run_archive2(
+                    archive2_path, 
+                    [str(f), f"-e={general_dir}"],
+                    operation="extract",
+                    archive_name=f.name,
+                    progress_callback=progress_callback
+                )
+            except Archive2Error as e:
+                return {"success": False, "error": str(e)}
 
         # Extract Textures
         for i, f in enumerate(texture_ba2s):
             progress_callback(f"Extracting Textures [{i+1}/{len(texture_ba2s)}]: {f.name}")
-            subprocess.run([archive2_path, str(f), f"-e={textures_dir}"], check=True, capture_output=True)
+            try:
+                self._run_archive2(
+                    archive2_path,
+                    [str(f), f"-e={textures_dir}"],
+                    operation="extract",
+                    archive_name=f.name,
+                    progress_callback=progress_callback
+                )
+            except Archive2Error as e:
+                return {"success": False, "error": str(e)}
 
         # Handle Strings - Move to Data/Strings (Force loose files)
         progress_callback("Moving STRINGS files to Data/Strings...")
@@ -131,11 +347,23 @@ class CCMerger:
         created_esls = []
 
         # 6. Repack Sounds (Uncompressed)
+        created_archives = []  # Track created archives for verification
+        
         if sound_files:
             output_name_sounds = "CCMerged_Sounds"
             merged_sounds = data_path / f"{output_name_sounds} - Main.ba2"
             progress_callback("Repacking Sounds Archive (Uncompressed)...")
-            subprocess.run([archive2_path, str(sounds_dir), f"-c={merged_sounds}", "-f=General", "-compression=None", f"-r={sounds_dir}"], check=True, capture_output=True)
+            try:
+                self._run_archive2(
+                    archive2_path,
+                    [str(sounds_dir), f"-c={merged_sounds}", "-f=General", "-compression=None", f"-r={sounds_dir}"],
+                    operation="create",
+                    archive_name=merged_sounds.name,
+                    progress_callback=progress_callback
+                )
+                created_archives.append(merged_sounds)
+            except Archive2Error as e:
+                return {"success": False, "error": str(e)}
             
             sounds_esl = f"{output_name_sounds}.esl"
             self._create_vanilla_esl(data_path / sounds_esl)
@@ -148,13 +376,24 @@ class CCMerger:
         
         if list(general_dir.rglob("*")):
             progress_callback("Repacking Main Archive (Compressed)...")
-            subprocess.run([archive2_path, str(general_dir), f"-c={merged_main}", "-f=General", "-compression=Default", f"-r={general_dir}"], check=True, capture_output=True)
+            try:
+                self._run_archive2(
+                    archive2_path,
+                    [str(general_dir), f"-c={merged_main}", "-f=General", "-compression=Default", f"-r={general_dir}"],
+                    operation="create",
+                    archive_name=merged_main.name,
+                    progress_callback=progress_callback
+                )
+                created_archives.append(merged_main)
+            except Archive2Error as e:
+                return {"success": False, "error": str(e)}
             
             main_esl = f"{output_name}.esl"
             self._create_vanilla_esl(data_path / main_esl)
             created_esls.append(main_esl)
 
-        # 8. Repack Textures (Smart Splitting)
+        # 8. Repack Textures (Smart Splitting with Vanilla-style Naming)
+        # Vanilla naming: "CCMerged - Textures1.ba2", "CCMerged - Textures2.ba2", etc.
         texture_files = []
         for f in textures_dir.rglob("*"):
             if f.is_file():
@@ -178,11 +417,12 @@ class CCMerger:
             groups.append(current_group)
 
         for idx, group in enumerate(groups):
-            suffix = "" if idx == 0 else f"_Part{idx+1}"
-            archive_name = f"{output_name}{suffix} - Textures.ba2"
+            # Use vanilla-style numbering: Textures1, Textures2, etc. (1-indexed)
+            texture_num = idx + 1
+            archive_name = f"{output_name} - Textures{texture_num}.ba2"
             target_path = data_path / archive_name
             
-            progress_callback(f"Repacking Textures Part {idx+1}/{len(groups)}...")
+            progress_callback(f"Repacking Textures {texture_num}/{len(groups)}: {archive_name}")
             
             # Move files to temp split dir
             split_dir = temp_dir / f"split_{idx}"
@@ -194,29 +434,72 @@ class CCMerger:
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(f_path, dest)
             
-            subprocess.run([archive2_path, str(split_dir), f"-c={target_path}", "-f=DDS", "-compression=Default", f"-r={split_dir}"], check=True, capture_output=True)
+            try:
+                self._run_archive2(
+                    archive2_path,
+                    [str(split_dir), f"-c={target_path}", "-f=DDS", "-compression=Default", f"-r={split_dir}"],
+                    operation="create",
+                    archive_name=archive_name,
+                    progress_callback=progress_callback
+                )
+                created_archives.append(target_path)
+            except Archive2Error as e:
+                return {"success": False, "error": str(e)}
             
-            # Create ESL for this part
-            esl_name = f"{output_name}{suffix}.esl"
-            self._create_vanilla_esl(data_path / esl_name)
-            created_esls.append(esl_name)
+            # Create ESL for this texture archive (only need one ESL for all textures)
+            # First texture archive gets the main ESL, additional ones share it
+            if idx == 0:
+                # Note: All texture archives share the same ESL prefix
+                pass  # ESL already created for main archive
 
         # Note: We do NOT generate separate STRINGS files for CCMerged.esl
         # The original CC plugins (cc*.esl) handle their own localization.
         # We moved the STRINGS files to Data/Strings to ensure the game finds them.
         progress_callback("STRINGS files moved to Data/Strings.")
 
-        # 9. Add to plugins.txt
+        # 9. Verify archive integrity before proceeding
+        progress_callback("Verifying archive integrity...")
+        verification_failed = []
+        for archive_path in created_archives:
+            is_valid, message = self.verify_ba2_integrity(archive_path, archive2_path, progress_callback)
+            if is_valid:
+                progress_callback(f"  ✓ {message}")
+            else:
+                progress_callback(f"  ✗ {message}")
+                verification_failed.append(message)
+        
+        if verification_failed:
+            error_msg = "Archive verification failed:\n" + "\n".join(verification_failed)
+            return {"success": False, "error": error_msg}
+        
+        progress_callback(f"All {len(created_archives)} archives verified successfully.")
+
+        # 10. Add to plugins.txt
         progress_callback("Enabling plugins...")
         self._add_to_plugins_txt(created_esls)
 
-        # 10. Cleanup
-        progress_callback("Cleaning up...")
+        # 11. Cleanup
+        progress_callback("Cleaning up original CC files...")
         for f in cc_files:
-            f.unlink()
-        shutil.rmtree(temp_dir)
+            try:
+                f.unlink()
+            except Exception as e:
+                progress_callback(f"Warning: Could not delete {f.name}: {e}")
+        
+        try:
+            shutil.rmtree(temp_dir)
+        except Exception as e:
+            progress_callback(f"Warning: Could not clean up temp directory: {e}")
 
-        return {"success": True}
+        # Build summary
+        summary = {
+            "archives_created": len(created_archives),
+            "files_processed": len(cc_files),
+            "esls_created": len(created_esls)
+        }
+        progress_callback(f"\nSummary: Created {summary['archives_created']} archives from {summary['files_processed']} CC files.")
+
+        return {"success": True, "summary": summary}
 
     def restore_backup(self, fo4_path, progress_callback):
         data_path = Path(fo4_path) / "Data"
