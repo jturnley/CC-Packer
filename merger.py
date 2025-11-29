@@ -162,9 +162,11 @@ class CCMerger:
                 if magic != b'BTDX':
                     return False, f"Invalid BA2 header (expected 'BTDX'): {ba2_path.name}"
                 
-                # Read version (should be 1 for FO4)
+                # Read version
+                # Version 1 = Original Fallout 4
+                # Version 8 = Fallout 4 Next-Gen Update (2024)
                 version = struct.unpack('<I', f.read(4))[0]
-                if version != 1:
+                if version not in [1, 8]:
                     return False, f"Unexpected BA2 version {version}: {ba2_path.name}"
                 
                 # Read archive type

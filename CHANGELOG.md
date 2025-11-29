@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Lookup Failed Errors** - Solved persistent string lookup failures by moving string files out of the archives and into the `Data/Strings` folder.
 - **Audio Issues** - Prevented audio glitches by ensuring sound files are packed without compression in a dedicated archive.
 - **LIP File Support** - Added `.lip` files (lip-sync data) to the audio archive to ensure proper handling.
+- **Next-Gen BA2 Version Support** - BA2 integrity verification now accepts both version 1 (original FO4) and version 8 (Next-Gen Update 2024) archives.
 - Fixed ESL plugin flags to use correct Light Master flags (0x201 = Master + Light Master).
 - **Vanilla-Style Texture Naming** - Texture archives now use numbered naming matching vanilla Bethesda archives (e.g., `CCMerged - Textures1.ba2`, `CCMerged - Textures2.ba2`) instead of `CCMerged_Part2 - Textures.ba2`.
 
