@@ -3,7 +3,7 @@
 A simple, standalone tool to merge Fallout 4 Creation Club content into unified archives, reducing plugin count and improving load times.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/jturnley/CC-Packer/releases/tag/v1.0.3)
+[![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)](https://github.com/jturnley/CC-Packer/releases/tag/v1.0.6)
 
 ## ✨ Features
 
@@ -35,17 +35,22 @@ A simple, standalone tool to merge Fallout 4 Creation Club content into unified 
 - **NEW**: Full localization support for enhanced compatibility
 - **STRINGS Generation**: Automatic extraction and merging of localized text
 
-## 🆕 What's New in v1.0.3?
+## 🆕 What's New in v1.0.6?
 
-### Major Improvements
+### Texture Archive Fix
 
-- **Loose STRINGS Extraction**: STRINGS files are now extracted to `Data/Strings` as loose files for reliable localization lookup
-- **Separate Audio Archive**: Sound files (.xwm, .wav, .fuz, .lip) are packed uncompressed in a dedicated archive to prevent audio corruption
-- **BA2 Integrity Verification**: All created archives are verified after packing to detect corruption
-- **Vanilla-Style Naming**: Texture archives now use numbered naming like vanilla (`CCMerged - Textures1.ba2`, `CCMerged - Textures2.ba2`)
-- **Merged File Detection**: Automatically detects previously merged files and prevents accidental re-merging
-- **Comprehensive Error Handling**: Detailed error messages instead of generic "error code 1" failures
-- **Administrator Detection**: Warns if running in a protected location without admin rights
+- **Individual ESL per Texture Archive**: Each split texture archive now gets its own ESL file
+- **New Naming Convention**: `CCMerged_Textures1.esl` → `CCMerged_Textures1 - Textures.ba2`
+- **Fixes Texture Loading**: Resolves issue where textures from split archives (Textures2, Textures3, etc.) weren't loading
+
+### Previous Major Features (v1.0.3)
+
+- **Loose STRINGS Extraction**: STRINGS files extracted to `Data/Strings` as loose files
+- **Separate Audio Archive**: Sound files packed uncompressed to prevent audio corruption
+- **Vanilla-Style Naming**: Texture archives use numbered naming like vanilla
+- **Merged File Detection**: Prevents accidental re-merging
+- **Comprehensive Error Handling**: Detailed error messages
+- **Administrator Detection**: Warns if running in protected location without admin rights
 
 ### Localization Support
 
@@ -64,7 +69,7 @@ A simple, standalone tool to merge Fallout 4 Creation Club content into unified 
 
 ### Option 1: Download Binary (Recommended)
 
-1. Download `CC-Packer_v1.0.3_Windows.zip` from [Releases](https://github.com/jturnley/CC-Packer/releases)
+1. Download `CC-Packer_v1.0.6.zip` from [Releases](https://github.com/jturnley/CC-Packer/releases)
 2. Extract anywhere on your PC
 3. Run `CCPacker.exe` - no installation needed!
 
@@ -103,12 +108,13 @@ If auto-detection fails:
 | Source Files | Output Archive | Notes |
 |-------------|----------------|-------|
 | `cc* - Main.ba2` | `CCMerged - Main.ba2` | Compressed, meshes/scripts/etc |
-| `cc* - Textures.ba2` | `CCMerged - Textures1.ba2`, `Textures2.ba2`, etc. | Auto-split at 7GB, vanilla naming |
+| `cc* - Textures.ba2` | `CCMerged_Textures1 - Textures.ba2`, etc. | Auto-split at 7GB, each with own ESL |
 | Sound files (.xwm, .wav, .fuz, .lip) | `CCMerged_Sounds - Main.ba2` | Uncompressed to prevent audio issues |
 | STRINGS files | `Data/Strings/*.STRINGS` | Extracted as loose files |
 
 **Output ESL Plugins:**
-- `CCMerged.esl` - Light master for main + texture archives
+- `CCMerged.esl` - Light master for main archive
+- `CCMerged_Textures1.esl`, `CCMerged_Textures2.esl`, etc. - One per texture archive
 - `CCMerged_Sounds.esl` - Light master for audio archive
 
 ## 🔨 Building from Source
@@ -142,14 +148,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Issues**: [GitHub Issues](https://github.com/jturnley/CC-Packer/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/jturnley/CC-Packer/discussions)
-- **Release Notes**: [View v1.0.2 Release Notes](RELEASE_NOTES_v1.0.2.md)
+- **Release Notes**: [View v1.0.6 Release Notes](RELEASE_NOTES_v1.0.6.md)
 
 ## 📋 Version History
 
+- **v1.0.6** (November 29, 2025) - Fixed texture archives not loading (each texture archive now gets its own ESL)
+- **v1.0.5** (November 29, 2025) - Disabled post-merge archive validation
+- **v1.0.4** (November 28, 2025) - Enhanced BA2 validation error messages
 - **v1.0.3** (November 28, 2025) - Loose STRINGS extraction, separate audio archive, BA2 verification, vanilla naming, comprehensive error handling
 - **v1.0.2** (November 26, 2025) - FO4 localization support, enhanced ESL headers
 - **v1.0.1** (November 26, 2025) - Smart texture archive splitting, enhanced backup system
-- **v1.0.0** (November 26, 2025) - Initial release, basic CC content merging
+- **v1.0.0** (November 25, 2025) - Initial release, basic CC content merging
 
 ## 🔗 Related Projects
 
