@@ -5,6 +5,24 @@ All notable changes to CC-Packer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2025-11-28
+
+### Improved
+
+- **Enhanced BA2 Validation Messages** - Improved error messages when BA2 verification fails to include expected values (e.g., "expected 1 or 8" for version, "expected GNRL or DX10" for archive type).
+- **Better BA2 Version Documentation** - Added comprehensive inline documentation for BA2 format versions:
+  - Version 1: Original Fallout 4 (2015)
+  - Version 7: Fallout 76 (not used in FO4)
+  - Version 8: Fallout 4 Next-Gen Update (April 2024)
+- **Archive Type Documentation** - Added comments explaining BA2 archive types:
+  - GNRL: General archives (meshes, scripts, sounds, etc.)
+  - DX10: Texture archives (DirectX 10 format DDS)
+
+### Technical Details
+
+- Updated `verify_ba2_integrity()` with more descriptive error messages and inline documentation.
+- No functional changes - validation logic remains the same (accepts versions 1 and 8, types GNRL and DX10).
+
 ## [1.0.3] - 2025-11-28
 
 ### Added

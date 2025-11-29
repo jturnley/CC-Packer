@@ -163,16 +163,21 @@ class CCMerger:
                     return False, f"Invalid BA2 header (expected 'BTDX'): {ba2_path.name}"
                 
                 # Read version
-                # Version 1 = Original Fallout 4
-                # Version 8 = Fallout 4 Next-Gen Update (2024)
+                # Known BA2 versions:
+                # - Version 1: Original Fallout 4 (2015)
+                # - Version 7: Fallout 76 (not used in FO4)
+                # - Version 8: Fallout 4 Next-Gen Update (April 2024)
+                # We accept 1 and 8 for Fallout 4 compatibility
                 version = struct.unpack('<I', f.read(4))[0]
                 if version not in [1, 8]:
-                    return False, f"Unexpected BA2 version {version}: {ba2_path.name}"
+                    return False, f"Unexpected BA2 version {version} (expected 1 or 8): {ba2_path.name}"
                 
                 # Read archive type
+                # GNRL = General (meshes, scripts, sounds, etc.)
+                # DX10 = Textures (DirectX 10 format DDS)
                 archive_type = f.read(4).decode('ascii', errors='ignore').strip('\x00')
                 if archive_type not in ['GNRL', 'DX10']:
-                    return False, f"Unknown archive type '{archive_type}': {ba2_path.name}"
+                    return False, f"Unknown archive type '{archive_type}' (expected GNRL or DX10): {ba2_path.name}"
                 
                 # Read file count
                 file_count = struct.unpack('<I', f.read(4))[0]
