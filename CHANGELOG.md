@@ -5,6 +5,25 @@ All notable changes to CC-Packer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2025-11-29
+
+### Fixed
+
+- **Texture Archives Not Loading** - Each texture archive now gets its own ESL file to ensure proper loading. Previously, split texture archives (Textures2, Textures3, etc.) were not being loaded by the game because they lacked associated plugins.
+
+### Changed
+
+- **New Archive Naming Convention** - Texture archives now use a per-archive naming scheme:
+  - `CCMerged_Textures1.esl` → `CCMerged_Textures1 - Textures.ba2`
+  - `CCMerged_Textures2.esl` → `CCMerged_Textures2 - Textures.ba2`
+  - This ensures each texture archive is properly registered with the game engine.
+
+### Technical Details
+
+- Each texture split now creates its own ESL plugin file
+- Archive naming changed from `CCMerged - Textures1.ba2` to `CCMerged_Textures1 - Textures.ba2`
+- All texture ESLs are automatically added to plugins.txt
+
 ## [1.0.5] - 2025-11-29
 
 ### Changed

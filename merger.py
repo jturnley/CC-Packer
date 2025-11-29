@@ -426,7 +426,10 @@ class CCMerger:
         for idx, group in enumerate(groups):
             # Use vanilla-style numbering: Textures1, Textures2, etc. (1-indexed)
             texture_num = idx + 1
-            archive_name = f"{output_name} - Textures{texture_num}.ba2"
+            # Each texture archive needs its own ESL to load properly
+            # Name format: CCMerged_Textures1.esl loads CCMerged_Textures1 - Textures.ba2
+            texture_plugin_name = f"{output_name}_Textures{texture_num}"
+            archive_name = f"{texture_plugin_name} - Textures.ba2"
             target_path = data_path / archive_name
             
             progress_callback(f"Repacking Textures {texture_num}/{len(groups)}: {archive_name}")
@@ -453,11 +456,11 @@ class CCMerger:
             except Archive2Error as e:
                 return {"success": False, "error": str(e)}
             
-            # Create ESL for this texture archive (only need one ESL for all textures)
-            # First texture archive gets the main ESL, additional ones share it
-            if idx == 0:
-                # Note: All texture archives share the same ESL prefix
-                pass  # ESL already created for main archive
+            # Create ESL for this texture archive
+            texture_esl = f"{texture_plugin_name}.esl"
+            self._create_vanilla_esl(data_path / texture_esl)
+            created_esls.append(texture_esl)
+            progress_callback(f"  Created {texture_esl} for {archive_name}")
 
         # Note: We do NOT generate separate STRINGS files for CCMerged.esl
         # The original CC plugins (cc*.esl) handle their own localization.
