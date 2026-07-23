@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[('bsarch.exe', '.')],
-    datas=[('BSARCH_LICENSE.txt', '.')],
+    datas=[('BSARCH_LICENSE.txt', '.'), ('CCList.txt', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

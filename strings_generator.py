@@ -318,38 +318,30 @@ class CCStringsGenerator:
         self.data_path = self.fo4_path / "Data"
         self.archive2_path = archive2_path
         self.extractor = CCStringsExtractor(archive2_path)
-        """
-        Initialize the generator.
-        
-        Args:
-            fo4_path: Path to Fallout 4 installation
-            archive2_path: Path to Archive2.exe
-        """
-        self.fo4_path = Path(fo4_path)
-        self.data_path = self.fo4_path / "Data"
-        self.archive2_path = archive2_path
-        self.extractor = CCStringsExtractor(archive2_path)
-        
+
         # Merged strings storage
         self.strings = StringsFile("STRINGS")
         self.dlstrings = StringsFile("DLSTRINGS")
         self.ilstrings = StringsFile("ILSTRINGS")
     
     def find_cc_archives(self) -> List[Path]:
-        """Find all CC BA2 archives that may contain strings."""
+        """Find all CC Main BA2 archives that may contain strings.
+
+        Uses CCList.txt for authoritative CC detection instead of glob patterns.
+        """
+        cc_list_path = Path(__file__).parent / "CCList.txt"
+        if not cc_list_path.exists():
+            return []
+
         cc_files: List[Path] = []
-        
-        # Look for Main archives (these contain the strings folder)
-        for ba2_file in self.data_path.glob("cc*-Main.ba2"):
-            # Skip our merged archives (both v2.0 CCPacked and legacy v1.x CCMerged)
-            if not ba2_file.name.lower().startswith(("ccpacked", "ccmerged")):
-                cc_files.append(ba2_file)
-        
-        # Also check for archives without the -Main suffix
-        for ba2_file in self.data_path.glob("cc*.ba2"):
-            if "-" not in ba2_file.name and not ba2_file.name.lower().startswith(("ccpacked", "ccmerged")):
-                cc_files.append(ba2_file)
-        
+        with open(cc_list_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                base_name = Path(line.strip()).stem
+                if base_name:
+                    main_ba2 = self.data_path / f"{base_name} - Main.ba2"
+                    if main_ba2.exists():
+                        cc_files.append(main_ba2)
+
         return sorted(set(cc_files))
     
     def extract_and_merge_strings(self, progress_callback: Optional[Callable[[str], None]] = None) -> bool:

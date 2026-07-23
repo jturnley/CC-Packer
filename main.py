@@ -13,12 +13,13 @@ Classes:
     MainWindow: Main application window with UI and controls
 
 Author: CC Packer Development Team
-Version: 3.1.0
+Version: 3.2.0
 License: See LICENSE file
 """
 
 import sys
 import os
+import re
 import ctypes
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -42,20 +43,23 @@ class MergeWorker(QThread):
     Attributes:
         merger (CCMerger): The merger instance that performs the actual work
         fo4_path (str): Path to the Fallout 4 installation directory
+        valid_cc (List[str]): Pre-validated list of CC base names to merge
     """
     progress = pyqtSignal(str)
     finished = pyqtSignal(bool, str)
 
-    def __init__(self, merger: CCMerger, fo4_path: str) -> None:
+    def __init__(self, merger: CCMerger, fo4_path: str, valid_cc: List[str]) -> None:
         """Initialize the merge worker.
-        
+
         Args:
             merger (CCMerger): Instance of CCMerger to use for operations
             fo4_path (str): Path to Fallout 4 installation directory
+            valid_cc (List[str]): Pre-validated list of CC base names to merge
         """
         super().__init__()
         self.merger = merger
         self.fo4_path = fo4_path
+        self.valid_cc = valid_cc
 
     def run(self):
         """Execute the merge operation in the background thread.
@@ -68,7 +72,7 @@ class MergeWorker(QThread):
             finished: Final result with (success: bool, message: str)
         """
         try:
-            result = self.merger.merge_cc_content(self.fo4_path, self.progress.emit)
+            result = self.merger.merge_cc_content(self.fo4_path, self.valid_cc, self.progress.emit)
             if result['success']:
                 self.finished.emit(True, "Merge completed successfully!")
             else:
@@ -160,7 +164,6 @@ class MainWindow(QMainWindow):
         attempts to auto-detect the Fallout 4 installation path.
         """
         super().__init__()
-        self.setWindowTitle("CC-Packer v3.1.0")
         self.setGeometry(100, 100, 800, 600)
         self.merger = CCMerger()
         self.worker = None
@@ -179,7 +182,7 @@ class MainWindow(QMainWindow):
         
         The UI uses PyQt6 layouts for responsive design.
         """
-        self.setWindowTitle("CC Packer v3.1.0")
+        self.setWindowTitle("CC Packer v3.2.0")
         self.setMinimumSize(600, 500)
 
         central_widget = QWidget()
@@ -236,30 +239,25 @@ class MainWindow(QMainWindow):
 
     def _check_existing_backup(self, fo4_path: str) -> Dict[str, Any]:
         """Check for existing backups and Creation Club file states.
-        
+
         Scans the Data folder to identify:
         - Previously merged CCPacked archives
-        - Unmerged CC content (cc*.ba2 files)
+        - Unmerged CC content (validated against CCList.txt)
         - Available backups in CC_Backup folder
-        
+
         This information is used to determine the current state and enable/disable
         appropriate UI controls.
-        
+
         Args:
             fo4_path (str): Path to Fallout 4 installation directory
-        
+
         Returns:
             dict: Dictionary containing:
                 - 'has_ccmerged' (bool): True if CCPacked files exist (variable name is legacy)
-                - 'has_other_cc' (bool): True if unmerged cc*.ba2 files exist
+                - 'has_other_cc' (bool): True if unmerged CC BA2 files exist
                 - 'backup_count' (int): Number of existing backups
                 - 'ccmerged_files' (list): Names of CCPacked files found (variable name is legacy)
-                - 'other_cc_files' (list): Names of other CC files found
-        
-        Note:
-            Variable names use legacy 'ccmerged' naming for backward compatibility,
-            but they track 'CCPacked' files in v2.0+. Also handles legacy 'CCMerged'
-            files from v1.x for upgrade scenarios.
+                - 'other_cc_files' (list): Names of unmerged CC Main BA2 files found
         """
         data_path = Path(fo4_path) / "Data"
         backup_dir = data_path / "CC_Backup"
@@ -276,12 +274,16 @@ class MainWindow(QMainWindow):
         if not data_path.exists():
             return result
         
-        # Get all cc*.ba2 files
-        all_cc_files = list(data_path.glob("cc*.ba2"))
-        
-        # Separate into CCPacked and other
-        ccmerged_files = [f.name for f in all_cc_files if f.name.lower().startswith("ccpacked")]
-        other_cc_files = [f.name for f in all_cc_files if not f.name.lower().startswith("ccpacked")]
+        # Find CCPacked (merged) archives using explicit prefix
+        ccmerged_files = [f.name for f in data_path.glob("CCPacked*.ba2")]
+
+        # Find unmerged CC BA2 files by checking CCList entries
+        other_cc_files = []
+        for cc_filename in self.merger._cc_list:
+            base_name = Path(cc_filename).stem
+            main_ba2 = data_path / f"{base_name} - Main.ba2"
+            if main_ba2.exists():
+                other_cc_files.append(main_ba2.name)
         
         # Count backups
         backup_count = 0
@@ -353,58 +355,6 @@ class MainWindow(QMainWindow):
         else:
             self.restore_btn.setEnabled(False)
             self.restore_btn.setToolTip("No backups available")
-
-    def _handle_merge_with_mixed_files(self, fo4_path: str) -> str:
-        """Handle merge attempt when both CCPacked and other CC files exist.
-        
-        When the user attempts to merge while CCPacked archives already exist
-        alongside unmerged CC files, this displays a dialog with options to:
-        1. Restore backup and repack all CC items together (recommended)
-        2. Cancel the merge operation
-        
-        This prevents creating multiple sets of merged archives which could
-        cause conflicts or confusion.
-        
-        Args:
-            fo4_path (str): Path to Fallout 4 installation directory
-        
-        Returns:
-            str: 'restore_and_merge' if user wants to restore+merge,
-                 'cancel' if user wants to cancel,
-                 'continue' if no mixed files detected (normal flow)
-        """
-        status = self._check_existing_backup(fo4_path)
-        
-        if status['has_ccmerged'] and status['has_other_cc']:
-            msg_box = QMessageBox(self)
-            msg_box.setWindowTitle("Mixed CC Content Detected")
-            msg_box.setIcon(QMessageBox.Icon.Warning)
-            
-            message = (
-                f"Found {len(status['ccmerged_files'])} merged (CCPacked) archive(s) and "
-                f"{len(status['other_cc_files'])} unmerged CC file(s).\n\n"
-                "To properly merge additional CC content with your existing merged files, "
-                "you need to restore your backup first, then repack everything together.\n\n"
-                "What would you like to do?"
-            )
-            
-            msg_box.setText(message)
-            
-            # Add custom buttons
-            restore_merge_btn = msg_box.addButton("Restore and Repack All CC Items", QMessageBox.ButtonRole.AcceptRole)
-            cancel_btn = msg_box.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
-            
-            msg_box.setDefaultButton(cancel_btn)
-            msg_box.exec()
-            
-            clicked = msg_box.clickedButton()
-            
-            if clicked == restore_merge_btn:
-                return 'restore_and_merge'
-            else:
-                return 'cancel'
-        
-        return 'continue'
 
     def _is_admin(self):
         """Check if the application is running with administrator privileges.
@@ -521,7 +471,6 @@ class MainWindow(QMainWindow):
                         library_paths = [steam_path]
                         with open(vdf_path, 'r', encoding='utf-8') as f:
                             content = f.read()
-                            import re
                             paths = re.findall(r'"path"\s+"([^"]+)"', content)
                             library_paths.extend(paths)
                         
@@ -760,7 +709,8 @@ class MainWindow(QMainWindow):
                     )
                     return
             else:
-                # Error or cancellation
+                # Deletion failed — critical dialog already shown by _handle_orphaned_cc_content
+                self.log("Merge cancelled: could not delete all orphaned CC content.")
                 return
         
         # Verify we have content to merge
@@ -775,7 +725,7 @@ class MainWindow(QMainWindow):
         self._disable_buttons()
         self.log("Starting merge process...")
         
-        self.worker = MergeWorker(self.merger, fo4)
+        self.worker = MergeWorker(self.merger, fo4, valid_cc)
         self.worker.progress.connect(self.log)  # type: ignore
         self.worker.finished.connect(self.on_finished)  # type: ignore
         self.worker.start()
@@ -786,7 +736,7 @@ class MainWindow(QMainWindow):
         Restores the most recent backup of Creation Club files, reversing a previous
         merge operation. The restore includes:
         - Original individual CC BA2 archives
-        - Original CC plugin files (ESL/ESP/ESM)
+        - Plugin files (.esl/.esp/.esm) are not restored because they are never deleted
         - Removal of merged CCPacked archives
         - Updating plugins.txt
         
