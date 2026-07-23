@@ -500,15 +500,15 @@ class CCMerger:
 
     def _verify_extraction(self, ba2_path: Path, extract_dir: Path,
                           progress_callback: Optional[Callable[[str], None]] = None) -> Tuple[bool, str]:
-        """Verify that BA2 extraction completed successfully.
-        
-        Performs validation checks after extracting an archive to ensure:
-        - Files were actually extracted to the output directory
-        - The extraction appears complete
-        - The archive header and metadata are valid
-        
-        This method uses both file system checks and BSArch listing verification
-        to ensure extraction integrity.
+        """Sanity-check that a BA2 extraction produced files on disk.
+
+        Reads the archive header to confirm it reports a non-zero file count,
+        then verifies that at least one file exists in the extraction directory.
+
+        Because archives extract cumulatively into a shared directory, this is a
+        presence check ("did anything land?"), not a strict per-archive file
+        count. If the header can't be read, it degrades to the presence check
+        alone rather than failing the merge.
         
         Args:
             ba2_path (Path): Path to the BA2 archive that was extracted
@@ -534,9 +534,10 @@ class CCMerger:
         if not success:
             if progress_callback:
                 progress_callback(f"  Warning: Could not read archive header: {error}")
-            # Can't verify, but don't fail - just check something was extracted
-            extracted_count = sum(1 for _ in extract_dir.rglob("*") if _.is_file())
-            if extracted_count == 0:
+            # Can't verify, but don't fail - just check something was extracted.
+            # any() short-circuits on the first file rather than walking the whole
+            # (cumulatively growing) extraction directory.
+            if not any(p.is_file() for p in extract_dir.rglob("*")):
                 return False, f"No files extracted from {ba2_path.name}"
             return True, ""
         
@@ -545,15 +546,13 @@ class CCMerger:
                 progress_callback(f"  Warning: Archive reports 0 files: {ba2_path.name}")
             return True, ""
         
-        # Count extracted files in the directory
-        extracted_count = sum(1 for _ in extract_dir.rglob("*") if _.is_file())
-        
-        # For cumulative extraction (multiple archives to same dir), we can't do exact count
-        # Just verify we have at least as many files as this archive contains
-        # This is a sanity check, not a strict verification
-        if extracted_count == 0:
+        # For cumulative extraction (multiple archives extract into the same dir)
+        # an exact per-archive count isn't possible, so this is only a sanity check
+        # that *something* landed on disk. any() short-circuits on the first file
+        # instead of walking the entire (growing) directory each call.
+        if not any(p.is_file() for p in extract_dir.rglob("*")):
             return False, f"No files extracted from {ba2_path.name}"
-        
+
         return True, ""
 
     def _find_cc_plugins(self, data_path: Path) -> List[Path]:
@@ -990,7 +989,7 @@ class CCMerger:
         output_name = "CCPacked_Main"
         merged_main = data_path / f"{output_name} - Main.ba2"
         
-        if list(general_dir.rglob("*")):
+        if any(general_dir.rglob("*")):
             progress_callback("Repacking Main Archive (Compressed)...")
             try:
                 self._pack_general_archive(general_dir, merged_main, compress=True, 
