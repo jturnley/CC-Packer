@@ -28,7 +28,7 @@ Classes:
     CCMerger: Main class that orchestrates all merge/restore operations
 
 Author: CC Packer Development Team
-Version: 3.2.0
+Version: 3.2.1
 License: See LICENSE file
 """
 

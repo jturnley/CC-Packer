@@ -1,0 +1,16 @@
+BSArch - Bethesda Game Studios Archive Packer/Unpacker
+======================================================
+
+BSArch is developed by the xEdit team (zilav, ElminsterAU, Sheson)
+Source Code: https://github.com/TES5Edit/TES5Edit
+
+License
+-------
+The Source Code Form is subject to the terms of the Mozilla Public License, v2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at
+https://mozilla.org/MPL/2.0/
+
+This software is bundled with CC-Packer for convenience. CC-Packer is not
+affiliated with or endorsed by the xEdit team.
+
+For the full MPL 2.0 license text, visit: https://mozilla.org/MPL/2.0/

@@ -13,7 +13,7 @@ Classes:
     MainWindow: Main application window with UI and controls
 
 Author: CC Packer Development Team
-Version: 3.2.0
+Version: 3.2.1
 License: See LICENSE file
 """
 
@@ -182,7 +182,7 @@ class MainWindow(QMainWindow):
         
         The UI uses PyQt6 layouts for responsive design.
         """
-        self.setWindowTitle("CC Packer v3.2.0")
+        self.setWindowTitle("CC Packer v3.2.1")
         self.setMinimumSize(600, 500)
 
         central_widget = QWidget()

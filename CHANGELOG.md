@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.1] - 2026-07-22
+
+### Improved
+
+- **Extraction Verification Performance**: `_verify_extraction` now short-circuits on the first extracted file instead of doing a full recursive file count after every archive. Because archives extract cumulatively into a shared directory, the old count grew with each item (O(n²) across a library); it is now O(n).
+- **Minor Optimization**: The Main-archive repack step tests for content with `any()` instead of materializing the full recursive file list.
+
+### Fixed
+
+- Corrected the `_verify_extraction` docstring, which claimed archive header/metadata validation the method does not perform. It now accurately documents its header-count-plus-presence check.
+
+## [3.2.0] - 2026-07-22
+
+### Changed
+
+- **Strict CCList.txt Detection**: Removed the `cc*.ba2`/`cc*.esl` glob fallback entirely. CC detection — for both merging and the existing-content scan — now matches strictly against `CCList.txt`, preventing non-CC files from being pulled into merge/repack operations.
+
+### Fixed
+
+- **Bundled CCList.txt**: `CCList.txt` is now a tracked file and bundled in the build via `CCPacker.spec` datas, so compiled builds use authoritative detection rather than silently falling back to glob matching.
+
+### Removed
+
+- Removed the now-unreachable mixed-content confirmation dialog path (`_handle_merge_with_mixed_files`).
+
 ## [3.1.0] - 2026-02-12
 
 ### Added

@@ -3,7 +3,7 @@
 A simple, standalone tool to merge Fallout 4 Creation Club content into unified archives, reducing plugin count and improving load times.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/jturnley/CC-Packer/releases/tag/v3.1.0)
+[![Version](https://img.shields.io/badge/version-3.2.1-blue.svg)](https://github.com/jturnley/CC-Packer/releases/tag/v3.2.1)
 
 ## ✨ Features
 
@@ -36,7 +36,15 @@ A simple, standalone tool to merge Fallout 4 Creation Club content into unified 
 - **NEW**: Full localization support for enhanced compatibility
 - **STRINGS Generation**: Automatic extraction and merging of localized text
 
-## 🆕 What's New in v3.1.0
+## 🆕 What's New in v3.2.1
+
+### Detection & Performance
+
+- **Strict CCList.txt Detection**: The `cc*` glob fallback is gone — CC content is now matched strictly against the bundled `CCList.txt`, so only official Creation Club items are ever touched (v3.2.0).
+- **Bundled CCList.txt**: The authoritative list is now packaged inside the executable, so compiled builds detect CC content exactly like the source (v3.2.0).
+- **Faster Extraction Verification**: Post-extraction checks short-circuit instead of re-walking a growing directory after every archive, speeding up large CC libraries (v3.2.1).
+
+## Previous Release: v3.1.0
 
 ### Accurate CC Detection via CCList.txt
 
